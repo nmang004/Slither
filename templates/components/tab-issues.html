@@ -1,0 +1,81 @@
+<!-- Severity Summary Bar -->
+<div class="severity-bar">
+    <div class="sev-item">
+        <span class="sev-dot" style="background:var(--red)"></span>
+        <strong>{{ critical_issues }}</strong> Critical
+    </div>
+    <div class="sev-item">
+        <span class="sev-dot" style="background:var(--yellow)"></span>
+        <strong>{{ warning_issues }}</strong> Warning
+    </div>
+    <div class="sev-item">
+        <span class="sev-dot" style="background:var(--accent)"></span>
+        <strong>{{ info_issues }}</strong> Info
+    </div>
+</div>
+
+{% if categories|length == 0 %}
+<div class="no-issues">{{ empty_msg }}</div>
+{% else %}
+<div class="issues-layout">
+    <!-- Category sidebar -->
+    <div class="category-sidebar">
+        {% for cat in categories %}
+        <div class="category-nav-item status-{{ cat.status }}" onclick="showCategory('{{ cat.id }}')" id="nav-{{ cat.id }}">
+            <span class="cat-dot cat-dot-{{ cat.status }}"></span>
+            <span class="cat-name">{{ cat.name }}</span>
+            {% if cat.issue_count > 0 %}
+            <span class="cat-badge">{{ cat.issue_count }}</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Category content -->
+    <div class="category-content">
+        {% for cat in categories %}
+        <div class="category-panel" id="panel-{{ cat.id }}" style="{% if not loop.first %}display:none{% endif %}">
+            <div class="category-header">
+                <h3>{{ cat.name }}</h3>
+                <p class="category-desc">{{ cat.description }}</p>
+                <span class="category-stats">{{ cat.checks_count }} issue{{ cat.checks_count|default(0) != 1 and "s" or "" }} found &middot; {{ cat.issue_count }} URL{{ cat.issue_count != 1 and "s" or "" }} affected</span>
+            </div>
+
+            {% if cat.checks|length == 0 %}
+            <div class="category-clean">{{ cat.clean_msg }}</div>
+            {% endif %}
+
+            {% for check in cat.checks %}
+            <div class="issue-group">
+                <div class="issue-header" onclick="toggleIssue(this)">
+                    <span class="severity severity-{{ check.severity }}">{{ check.severity }}</span>
+                    <span>{{ check.display_name }}</span>
+                    <span class="count">{{ check.count }}</span>
+                    <span class="arrow">▶</span>
+                </div>
+                <div class="issue-body">
+                    <div class="issue-guidance">
+                        <div class="why"><strong>Why it matters:</strong> {{ check.why }}</div>
+                        <div class="fix"><strong>How to fix:</strong> {{ check.fix }}</div>
+                    </div>
+                    <ul>
+                    {% for item in check.items %}
+                        <li class="issue-item">
+                            <a class="issue-url" data-page-url="{{ item.full_url }}" onclick="showPageFromIssue(this.dataset.pageUrl)">{{ item.path }}</a>
+                            {% if item.detail %}
+                            <span class="issue-detail">{{ item.detail }}</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                    {% if check.truncated %}
+                    <li class="issue-url truncation-note">Showing {{ check.shown }} of {{ check.count }} affected URLs — the full list is in the JSON and CSV exports.</li>
+                    {% endif %}
+                    </ul>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}

@@ -1,0 +1,27 @@
+# Build
+/target
+.worktrees/
+
+# Crawl output files
+crawl-*.json
+crawl-*.html
+extract-*.json
+linkgraph-*.html
+
+# Screenshots and images from dev/testing
+*.png
+
+# Playwright MCP logs
+.playwright-mcp/
+
+# Local tool settings
+.claude/
+
+# Python/pytest residue (the Python tools themselves were removed)
+__pycache__/
+.pytest_cache/
+
+# Environment and secrets
+.env
+.env.*
+.DS_Store

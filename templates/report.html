@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slither — {{ domain }}</title>
+<script>
+// Restore a saved theme choice before first paint to avoid a flash. With no
+// saved choice the CSS follows the OS via prefers-color-scheme.
+(function () {
+    try {
+        var t = localStorage.getItem('slither-theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+})();
+</script>
+<style>
+{{ css | safe }}
+</style>
+</head>
+<body>
+<div class="app-layout">
+    {{ header_html | safe }}
+
+    <main class="main-content">
+        <div id="tab-overview" class="tab-content active">
+            {{ tab_overview_html | safe }}
+        </div>
+        <div id="tab-issues" class="tab-content">
+            {{ tab_issues_html | safe }}
+        </div>
+        <div id="tab-pages" class="tab-content">
+            {{ tab_pages_html | safe }}
+        </div>
+        <div id="tab-structure" class="tab-content">
+            {{ tab_structure_html | safe }}
+        </div>
+    </main>
+</div>
+
+<script>
+function switchTab(name, el) {
+    document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.nav-item').forEach(function(t) { t.classList.remove('active'); });
+    document.getElementById('tab-' + name).classList.add('active');
+    el.classList.add('active');
+}
+
+// Cycle light ↔ dark. The effective theme is either an explicit data-theme or
+// the OS preference; toggling flips to the opposite and persists the choice.
+function toggleTheme() {
+    var root = document.documentElement;
+    var current = root.getAttribute('data-theme');
+    if (!current) {
+        current = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('slither-theme', next); } catch (e) {}
+}
+{{ tab_scripts | safe }}
+</script>
+</body>
+</html>

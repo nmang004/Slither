@@ -1,0 +1,109 @@
+{% if pages_truncated %}
+<div class="truncation-note">Showing the {{ pages_shown }} pages with the most issues, of {{ total_pages }} crawled — the full set is in the JSON and CSV exports.</div>
+{% endif %}
+<!-- Filter bar -->
+<div class="table-controls">
+    <input type="text" id="page-filter" placeholder="Filter pages by URL, title..." oninput="filterPages()">
+    <select id="status-filter" onchange="filterPages()">
+        <option value="">All Status</option>
+        <option value="2">2xx</option>
+        <option value="3">3xx</option>
+        <option value="4">4xx</option>
+        <option value="5">5xx</option>
+    </select>
+</div>
+
+<!-- Pages table -->
+<table id="pages-table">
+    <thead>
+        <tr>
+            <th onclick="sortTable(0)">URL <span class="sort-arrow"></span></th>
+            <th onclick="sortTable(1)">Status <span class="sort-arrow"></span></th>
+            <th onclick="sortTable(2)">Title <span class="sort-arrow"></span></th>
+            <th onclick="sortTable(3)">Words <span class="sort-arrow"></span></th>
+            <th onclick="sortTable(4)">Links <span class="sort-arrow"></span></th>
+            <th onclick="sortTable(5)">Time <span class="sort-arrow"></span></th>
+            <th onclick="sortTable(6)">LCP <span class="sort-arrow"></span></th>
+            <th onclick="sortTable(7)">CLS <span class="sort-arrow"></span></th>
+            <th onclick="sortTable(8)">Perf <span class="sort-arrow"></span></th>
+            <th onclick="sortTable(9)">Depth <span class="sort-arrow"></span></th>
+            <th>Issues</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for page in pages %}
+        <tr class="expandable" data-idx="{{ loop.index0 }}" onclick="toggleDetail(this)">
+            <td class="url" title="{{ page.url }}">{{ page.url }}</td>
+            <td><span class="status-badge s{{ page.status_class }}">{{ page.status }}</span></td>
+            <td>{{ page.title }}</td>
+            <td class="num">{{ page.word_count }}</td>
+            <td class="num">{{ page.link_count }}</td>
+            <td class="num">{{ page.response_time_ms }}ms</td>
+            <td class="num">{{ page.lcp_display }}</td>
+            <td class="num">{{ page.cls_display }}</td>
+            <td class="num">{{ page.perf_display }}</td>
+            <td class="num">{{ page.depth }}</td>
+            <td class="issues-cell">
+                {% if page.has_issues %}
+                    {% if page.issue_critical > 0 %}<span class="issue-dot dot-critical">{{ page.issue_critical }}</span>{% endif %}
+                    {% if page.issue_warning > 0 %}<span class="issue-dot dot-warning">{{ page.issue_warning }}</span>{% endif %}
+                    {% if page.issue_info > 0 %}<span class="issue-dot dot-info">{{ page.issue_info }}</span>{% endif %}
+                {% else %}
+                    <span class="no-issues-dash">&mdash;</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr class="page-detail" id="detail-{{ loop.index0 }}">
+            <td colspan="11">
+                <div class="detail-card"><div class="detail-grid">
+                    <div><span class="label">Title</span><br>{{ page.title }}{% if page.title_length > 0 %} <span class="detail-meta">{{ page.title_length }} chars &middot; {{ page.title_pixel_width }}px</span>{% endif %}</div>
+                    <div><span class="label">Meta Description</span><br>{{ page.meta_description }}{% if page.meta_desc_length > 0 %} <span class="detail-meta">{{ page.meta_desc_length }} chars &middot; {{ page.meta_desc_pixel_width }}px</span>{% endif %}</div>
+                    <div><span class="label">H1</span><br>{{ page.h1 }}</div>
+                    <div><span class="label">Canonical</span><br>{{ page.canonical }}</div>
+                    <div><span class="label">Indexability</span><br>{% if page.is_indexable %}<span class="idx-yes">Indexable</span>{% else %}<span class="idx-no">Noindex</span>{% endif %}</div>
+                    <div><span class="label">Security</span><br><span class="sec-line">HTTPS {% if page.is_https %}&#10003;{% else %}&#10007;{% endif %} &middot; HSTS {% if page.has_hsts %}&#10003;{% else %}&#10007;{% endif %} &middot; CSP {% if page.has_csp %}&#10003;{% else %}&#10007;{% endif %}</span></div>
+                    <div><span class="label">Schema Types</span><br>{{ page.schema_types }}</div>
+                    <div><span class="label">OG Tags</span><br>{{ page.og_tags_display }}</div>
+                    <div><span class="label">Internal Links</span><br>{{ page.internal_link_count }}</div>
+                    <div><span class="label">External Links</span><br>{{ page.external_link_count }}</div>
+                    <div><span class="label">Images</span><br>{{ page.image_count }} ({{ page.images_no_alt }} missing alt)</div>
+                    <div><span class="label">Readability</span><br>{{ page.readability_score }}</div>
+                    <div><span class="label">Content Type</span><br>{{ page.content_type }}</div>
+                    <div><span class="label">Response Time</span><br>{{ page.response_time_ms }}ms</div>
+                    {% if page.has_cwv %}
+                    <div><span class="label">Core Web Vitals</span><br>LCP: {{ page.lcp_detail }} · INP: {{ page.inp_detail }} · CLS: {{ page.cls_detail }} · FCP: {{ page.fcp_detail }} · TTFB: {{ page.ttfb_detail }} · Score: {{ page.perf_score_detail }}</div>
+                    {% endif %}
+                    {% if page.has_redirect %}
+                    <div style="grid-column: 1 / -1;">
+                        <span class="label">Redirect Chain</span><br>
+                        <div class="redirect-chain">{{ page.redirect_chain_display | safe }}</div>
+                    </div>
+                    {% endif %}
+                    {% if page.issue_badges|length > 0 %}
+                    <div style="grid-column: 1 / -1;">
+                        <span class="label">Page Issues</span><br>
+                        <div class="page-issue-badges">
+                        {% for badge in page.issue_badges %}
+                            <span class="page-badge badge-{{ badge.severity }}">{{ badge.display_name }}</span>
+                        {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div></div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Pagination -->
+<div class="pagination" id="pagination">
+    <button onclick="goToPage(currentPage-1)" id="prev-btn" disabled>&larr; Prev</button>
+    <span class="page-info" id="page-info"></span>
+    <button onclick="goToPage(currentPage+1)" id="next-btn">Next &rarr;</button>
+    <select id="page-size" onchange="changePageSize(this.value)">
+        <option value="25">25/page</option>
+        <option value="50">50/page</option>
+        <option value="100">100/page</option>
+    </select>
+</div>

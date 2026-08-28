@@ -1,0 +1,115 @@
+{% if js_detection_warning %}
+<div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; color: #664d03;">
+    <strong>&#9888; {{ js_detection_count }} of {{ js_detection_total }} pages appear to be JavaScript-rendered.</strong>
+    <p style="margin: 4px 0 0 0;">Results may be incomplete. Re-run with <code style="background: rgba(0,0,0,0.08); padding: 2px 6px; border-radius: 4px;">--backend cloudflare</code> for better analysis.</p>
+</div>
+{% endif %}
+
+<!-- Hero Score Card -->
+<div class="hero-card">
+    <div class="hero-score">
+        <div class="score-container" style="--glow-color: {{ score_color }}">
+            {{ score_gauge | safe }}
+        </div>
+    </div>
+    <div class="hero-info">
+        <div class="hero-grade" style="color: {{ score_color }}">{{ grade_verdict }}</div>
+        {% if mascot_mood == "happy" %}
+        <svg class="mood-icon" width="20" height="20" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="var(--green)" stroke-width="1.5"/><path d="M5 9.5c.5 1.5 2 2.5 3 2.5s2.5-1 3-2.5" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round"/><circle cx="5.5" cy="6.5" r="1" fill="var(--green)"/><circle cx="10.5" cy="6.5" r="1" fill="var(--green)"/></svg>
+        {% else %}
+        <svg class="mood-icon" width="20" height="20" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="var(--orange)" stroke-width="1.5"/><path d="M5 11c.5-.8 1.5-1.2 3-1.2s2.5.4 3 1.2" stroke="var(--orange)" stroke-width="1.5" stroke-linecap="round"/><circle cx="5.5" cy="6.5" r="1" fill="var(--orange)"/><circle cx="10.5" cy="6.5" r="1" fill="var(--orange)"/></svg>
+        {% endif %}
+        <div class="hero-message">"{{ fun_verdict }}"</div>
+        {% if has_deductions %}
+        <div class="score-breakdown-toggle" onclick="toggleScoreBreakdown()">
+            How is this calculated? <span id="score-toggle-arrow">&#9654;</span>
+        </div>
+        <div id="score-breakdown" class="score-breakdown" style="display:none">
+            <table class="breakdown-table">
+                <thead>
+                    <tr><th>Category</th><th>Issues</th><th>Impact</th></tr>
+                </thead>
+                <tbody>
+                    {% for d in deductions %}
+                    <tr>
+                        <td>{{ d.category }}</td>
+                        <td class="breakdown-issues">
+                            {% if d.critical > 0 %}<span class="bd-critical">{{ d.critical }} critical</span>{% endif %}
+                            {% if d.warning > 0 %}<span class="bd-warning">{{ d.warning }} warning</span>{% endif %}
+                            {% if d.info > 0 %}<span class="bd-info">{{ d.info }} info</span>{% endif %}
+                        </td>
+                        <td class="breakdown-points">-{{ d.points }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="breakdown-total"><td>Starting Score</td><td></td><td class="breakdown-points">100.0</td></tr>
+                    <tr class="breakdown-total"><td>Total Deductions</td><td></td><td class="breakdown-points red">-{{ total_deducted }}</td></tr>
+                    <tr class="breakdown-total breakdown-final"><td>Final Score</td><td></td><td class="breakdown-points">{{ health_score }}</td></tr>
+                </tfoot>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Key Metrics -->
+<div class="cards">
+    <div class="card">
+        <div class="label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="1.5" width="12" height="13" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 5h6M5 8h6M5 11h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Pages Crawled</div>
+        <div class="value cyan">{{ total_pages }}</div>
+        <div class="sub">{{ pages_discovered }} discovered · {{ pages_errored }} errors</div>
+    </div>
+    <div class="card">
+        <div class="label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 4.5V8l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Avg Response</div>
+        <div class="value {{ response_color }}">{{ avg_response_time }}ms</div>
+        <div class="sub">p50: {{ p50 }}ms · p95: {{ p95 }}ms{% if backend == "cloudflare" %} <span style="font-size: 0.85em; opacity: 0.7;">(HEAD request timing, approximate)</span>{% endif %}</div>
+    </div>
+    <div class="card">
+        <div class="label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1.5L14.5 13H1.5L8 1.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6.5v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.5" fill="currentColor"/></svg> Issues Found</div>
+        <div class="value {% if total_issues > 0 %}yellow{% else %}green{% endif %}">{{ total_issues }}</div>
+        <div class="sub">
+            {% if critical_issues > 0 %}<span style="color:var(--red)">{{ critical_issues }} critical</span> · {% endif %}
+            {{ warning_issues }} warning · {{ info_issues }} info
+        </div>
+    </div>
+    <div class="card">
+        <div class="label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 3h12M2 6.5h8M2 10h10M2 13.5h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Content</div>
+        <div class="value">{{ avg_word_count }}</div>
+        <div class="sub">avg words/page</div>
+    </div>
+{% if cwv_pages_tested > 0 %}
+    <div class="card">
+        <div class="label"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 13V7M8 13V3M13 13V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Core Web Vitals</div>
+        <div class="value {% if cwv_pct_good >= 80 %}green{% elif cwv_pct_good >= 50 %}yellow{% else %}red{% endif %}">{{ cwv_pct_good }}% Good</div>
+        <div class="sub">{{ cwv_pages_tested }} tested · LCP {{ avg_lcp }}ms · CLS {{ avg_cls }}</div>
+    </div>
+{% endif %}
+</div>
+
+<!-- Charts -->
+<div class="chart-row">
+    <div class="chart-box">
+        <h3>Status Distribution</h3>
+        {{ donut_chart | safe }}
+    </div>
+    <div class="chart-box">
+        <h3>Response Time Distribution</h3>
+        {{ bar_chart | safe }}
+    </div>
+</div>
+
+<!-- Top Issues -->
+{% if top_issues|length > 0 %}
+<div class="section">
+    <div class="section-title">Top Issues</div>
+    {% for issue in top_issues %}
+    <div class="top-issue-row">
+        <span class="severity severity-{{ issue.severity }}">{{ issue.severity }}</span>
+        <span class="top-issue-name">{{ issue.display_name }}</span>
+        <span class="top-issue-count">{{ issue.count }} found</span>
+        <span class="top-issue-why">{{ issue.why }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}

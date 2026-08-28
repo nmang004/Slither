@@ -1,0 +1,52 @@
+<!-- Stats Bar -->
+<div class="structure-stats">
+    <span class="stat-item"><strong>{{ total_pages }}</strong> pages</span>
+    <span class="stat-sep">&middot;</span>
+    <span class="stat-item"><strong>{{ dir_count }}</strong> directories</span>
+    <span class="stat-sep">&middot;</span>
+    <span class="stat-item">max depth <strong>{{ max_depth }}</strong></span>
+</div>
+
+<!-- Depth Distribution -->
+<div class="depth-chart">
+    <h3 class="depth-chart-title">Depth Distribution</h3>
+    {% for bar in depth_bars %}
+    <div class="depth-bar-row" data-depth="{{ bar.depth }}" onclick="filterByDepth({{ bar.depth }})">
+        <span class="depth-label">Depth {{ bar.depth }}</span>
+        <div class="depth-bar-track">
+            <div class="depth-bar-fill depth-{{ bar.depth }}" style="width: {{ bar.pct }}%"></div>
+        </div>
+        <span class="depth-count">{{ bar.count }} page{{ bar.count != 1 and "s" or "" }}</span>
+    </div>
+    {% endfor %}
+    <div class="depth-bar-row depth-reset" onclick="filterByDepth(null)">
+        <span class="depth-label" style="color:var(--accent-dark); cursor:pointer">Show all</span>
+    </div>
+</div>
+
+<!-- Two Panel Layout -->
+<div class="structure-layout">
+    <!-- Explorer Panel -->
+    <div class="structure-explorer">
+        <div class="explorer-toolbar">
+            <input type="text" class="explorer-search" placeholder="Search pages..." oninput="searchStructure(this.value)">
+            <button class="explorer-btn" onclick="expandAllDirs()">Expand All</button>
+            <button class="explorer-btn" onclick="collapseAllDirs()">Collapse All</button>
+        </div>
+        <div class="explorer-tree">
+            {{ tree_html | safe }}
+        </div>
+    </div>
+
+    <!-- Detail Panel -->
+    <div class="structure-detail" id="structure-detail">
+        <div class="detail-placeholder">
+            <div class="placeholder-icon"><svg width="32" height="32" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="var(--text-muted)" stroke-width="1.5"/><path d="M11 11l3.5 3.5" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            <div class="placeholder-text">Select a page or directory to view details</div>
+        </div>
+    </div>
+</div>
+
+<script>
+window.__structurePageData = {{ page_data_json | safe }};
+</script>

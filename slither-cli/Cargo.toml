@@ -1,0 +1,49 @@
+[package]
+name = "slither-cli"
+version = "0.3.0"
+edition = "2021"
+description = "CLI interface for Slither, the SEO toolkit made for Scorpion"
+license = "MIT"
+repository = "https://github.com/nmang004/Slither"
+homepage = "https://github.com/nmang004/Slither"
+authors = ["ZenithDevHQ"]
+keywords = ["seo", "crawler", "audit", "cli"]
+categories = ["command-line-utilities", "web-programming"]
+readme = "../README.md"
+
+[[bin]]
+name = "slither"
+path = "src/main.rs"
+
+[features]
+default = ["server"]
+cloudflare = ["slither-core/cloudflare"]
+playwright = ["slither-core/playwright"]
+server = ["dep:slither-server"]
+
+[dependencies]
+slither-core = { path = "../slither-core", default-features = false }
+slither-server = { path = "../slither-server", optional = true }
+clap = { version = "4", features = ["derive", "env"] }
+indicatif = "0.17"
+console = "0.15"
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+anyhow = "1"
+serde_json = "1"
+chrono = "0.4"
+url = "2"
+dialoguer = "0.11"
+# See slither-core/Cargo.toml: rustls instead of the default native-tls so the
+# release binary carries no system-OpenSSL dependency.
+reqwest = { version = "0.12", default-features = false, features = [
+    "rustls-tls",
+    "charset",
+    "json",
+    "http2",
+    # A reqwest default we must keep after opting out of default features:
+    # users behind a corporate proxy expect the system proxy to be honored.
+    "system-proxy",
+] }
+dotenvy = "0.15"

@@ -1,0 +1,67 @@
+[package]
+name = "slither-core"
+version = "0.3.0"
+edition = "2021"
+description = "Core crawling engine for Slither, the SEO toolkit made for Scorpion"
+license = "MIT"
+repository = "https://github.com/nmang004/Slither"
+homepage = "https://github.com/nmang004/Slither"
+authors = ["ZenithDevHQ"]
+keywords = ["seo", "crawler", "audit", "html", "web"]
+categories = ["command-line-utilities", "web-programming"]
+readme = "../README.md"
+
+[lib]
+name = "slither_core"
+path = "src/lib.rs"
+
+[features]
+# No optional integration is on by default. `cloudflare` reaches a third-party
+# API and needs credentials, so it is opt-in like `playwright` rather than
+# compiled into every build.
+default = []
+cloudflare = []
+playwright = ["dep:chromiumoxide", "dep:futures", "dep:which", "dep:libc"]
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+# default-features = false drops native-tls: the default feature set links
+# system OpenSSL, so the published Linux binary failed to start on any distro
+# without a matching libssl, and the tree carried two TLS stacks (rustls is
+# pulled in regardless). "charset" is required by Response::text().
+reqwest = { version = "0.12", default-features = false, features = [
+    "rustls-tls",
+    "charset",
+    "gzip",
+    "brotli",
+    "json",
+    "http2",
+    # A reqwest default we must keep after opting out of default features:
+    # users behind a corporate proxy expect the system proxy to be honored.
+    "system-proxy",
+] }
+scraper = "0.20"
+encoding_rs = "0.8"
+url = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+texting_robots = "0.2"
+minijinja = { version = "2", features = ["builtins"] }
+dashmap = "6"
+anyhow = "1"
+thiserror = "2"
+tracing = "0.1"
+chrono = { version = "0.4", features = ["serde"] }
+quick-xml = "0.41"
+which = { version = "7", optional = true }
+rusqlite = { version = "0.32", features = ["bundled"] }
+uuid = { version = "1", features = ["v4"] }
+rand = "0.8"
+chromiumoxide = { version = "0.9", optional = true }
+libc = { version = "0.2", optional = true }
+futures = { version = "0.3", optional = true }
+
+[dev-dependencies]
+serial_test = "3"
+tempfile = "3"

@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # A new advisory can land against an unchanged lockfile, so the audit job has
+  # to run on a timer as well as on repo activity.
+  schedule:
+    - cron: "0 7 * * 1" # Mondays 07:00 UTC
+
+# Third-party actions are pinned by commit SHA rather than a mutable tag, so a
+# compromised or retagged release cannot silently change what CI runs. The
+# trailing comment records the tag each SHA corresponds to.
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    name: Rust (fmt, clippy, test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+
+      - name: Format check
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: Test
+        # The #[ignore]d tests hit live external services; skip them in CI.
+        run: cargo test --workspace --locked
+
+      # Guard the feature combinations that are not exercised above, so they
+      # cannot silently stop compiling.
+      - name: Check without default features
+        run: cargo check --workspace --no-default-features --locked
+
+      - name: Check playwright backend
+        run: cargo check -p slither-core --features playwright --locked
+
+  audit:
+    name: Dependency advisories
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+
+      # cargo-audit is installed rather than run via rustsec/audit-check: that
+      # action wants `issues: write` to file advisories on scheduled runs, and
+      # keeping this workflow at `contents: read` is worth more than the
+      # convenience. Installing latest also matters — releases before 0.22
+      # cannot parse the CVSS 4.0 scores now present in the advisory DB and
+      # abort with a parse error instead of auditing anything.
+      - name: Install cargo-audit
+        # The workflow-level `-D warnings` would fail the build of a
+        # third-party crate over a warning in code we do not control.
+        env:
+          RUSTFLAGS: ""
+        run: cargo install cargo-audit --locked
+
+      # Exits non-zero on a vulnerability, which fails the job. Unmaintained
+      # and yanked-crate notices are reported as warnings without failing, so a
+      # transitive dependency going unmaintained informs rather than blocking
+      # every unrelated PR.
+      - name: Audit dependencies
+        run: cargo audit
