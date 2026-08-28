@@ -148,14 +148,14 @@ echo ""
 # Check PATH
 case ":${PATH}:" in
     *":${INSTALL_DIR}:"*)
-        echo "Run 'slither' to get started."
-        echo "Run 'slither setup' to install Python analysis tools."
+        echo "Run 'slither crawl https://example.com/' for your first audit."
+        echo "Connect it to Claude: claude mcp add slither -- slither serve --mcp"
         ;;
     *)
         echo "Add to your PATH:"
         echo ""
         echo "  export PATH=\"${INSTALL_DIR}:\$PATH\""
         echo ""
-        echo "Then run 'slither setup' to install Python analysis tools."
+        echo "Then run 'slither crawl https://example.com/' for your first audit."
         ;;
 esac
